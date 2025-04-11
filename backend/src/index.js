@@ -21,7 +21,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "https://qtify-rroi.vercel.app/",
+    origin: "https://qtify-rroi.vercel.app",
     credentials: true,
   })
 );
