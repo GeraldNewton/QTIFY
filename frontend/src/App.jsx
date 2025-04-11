@@ -1,50 +1,28 @@
-import { use, useRef } from "react";
-import { Button } from "./components/ui/button"
+import { Route, Routes } from "react-router-dom";
+import MainLayout from "./layout/MainLayout.jsx";
+import HomePage from "./pages/home/HomePage.jsx";
+import AlbumPage from "./pages/albums/AlbumPage.jsx";
+import AdminPage from "./pages/Admin/AdminPage.jsx";
+import { AuthenticateWithRedirectCallback } from "@clerk/clerk-react";
+import AuthCallBackPage from "./pages/Auth/AuthCallBackPage.jsx";
+import ChatePage from "./pages/Chat/ChatePage.jsx";
+import SignUpPage from "./pages/signup/SignUpPage.jsx";
 
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
-
-export default function App() {
-  const audio_ref=useRef(null)
-  const image_ref=useRef(null)
-  const sendReq = async () => {
-    // let res = await fetch('http://localhost:5000/api/auth/callback', {
-    //   method: 'GET',
-    //   credentials: 'include',
-    // });
-    console.log(audio_ref,image_ref)
-    const formData = new FormData();
-    formData.append("audio_file", audio_ref.current.files[0]);
-    formData.append("image_file", image_ref.current.files[0]);
-    formData.append("song_name", "test");
-    formData.append("artist", "Arpit");
-    formData.append("duration", 25);
-    formData.append("albumId", image_ref.current.files[0]);
-    for (let pair of formData.entries()) {
-      console.log(`${pair[0]}: ${pair[1].name || pair[1]}`);
-    }
-  
-    let res = await fetch('http://localhost:5000/api/admin/song', {
-      method: "POST",
-      // headers: {
-      //   "Content-Type": "multipart/form-data", // Set the content type to JSON
-      // },
-      body: formData, // FormData automatically sets the correct headers for multipart/form-data
-    })
-    res=await res.json()
-    console.log(res);
-  }
+function App() {
   return (
-    <header>
-      {/* <SignedOut>
-        <SignInButton/>
-      </SignedOut>
-      <SignedIn>
-        <UserButton />
-      </SignedIn>
-      <Button onClick={()=>sendReq()}>send req</Button> */}
-      <input ref={audio_ref} type="file" id="audioInput"/>
-      <input ref={image_ref} type="file" id="imageInput"/>
-      <button onClick={()=>sendReq()} id="uploadButton">Upload File</button>
-    </header>
+    <>
+      <Routes>
+        <Route path="/sso-callback" element={<SignUpPage />} />
+        <Route path="/auth-callback" element={<AuthCallBackPage />} />
+        <Route path="/" element={<MainLayout />}>
+          <Route index element={<HomePage />} />
+          <Route path="album/:_id" element={<AlbumPage />} />
+          <Route path="admin" element={<AdminPage />} />
+          <Route path="chat" element={<ChatePage />} />
+        </Route>
+      </Routes>
+    </>
   );
 }
+
+export default App;
