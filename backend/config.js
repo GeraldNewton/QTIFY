@@ -4,7 +4,8 @@ dotenv.config();
 
 module.exports={
     PORT:process.env.PORT,
-    LOCAL_URI:process.env.LOCAL_URI,
+    LOCAL_URL:process.env.LOCAL_URL,
+    MONGODB_URL:process.env.MONGODB_URL,
     CLERK_PUBLISHABLE_KEY:process.env.CLERK_PUBLISHABLE_KEY,
     CLERK_SECRET_KEY:process.env.CLERK_SECRET_KEY,
     ADMIN_EMAIL:process.env.ADMIN_EMAIL,

@@ -1,19 +1,36 @@
 const cloudinary = require("../lib/cloudinary");
 const mongoose = require("mongoose");
-const { LOCAL_URI } = require("../../config");
+const { LOCAL_URL,MONGODB_URL } = require("../../config");
 const album_model = require("../models/album_model");
 const song_model = require("../models/song_model");
 const path = require("path");
 const fs = require("fs");
 const seedFunction = require("../helpers/seed_function");
 
+/**
+ * Seeds the database with sample data.
+ *
+ * Connects to the local database and drops the existing collections.
+ * Deletes all cloudinary resources with the prefix "QTIFY".
+ * Seeds the database with 4 sample albums and 12 sample songs.
+ * Uploads the sample song and cover images of songs and cover images to cloudinary.
+ * Adds the cloudinary links to the respective song and album documents.
+ * adds songs to albums
+ * Saves the documents to the database.
+ * Closes the mongoose connection.
+ */
 async function seed() {
-  await mongoose.connect(LOCAL_URI);
-  await mongoose.connection.dropDatabase();
-  await cloudinary.api.delete_resources_by_prefix("QTIFY", {
-    resource_type: "video",
+  try {
+    
+    await mongoose.connect(MONGODB_URL);
+    await mongoose.connection.dropDatabase();
+    await cloudinary.api.delete_resources_by_prefix("QTIFY", {
+      resource_type: "video",
   });
   await cloudinary.api.delete_resources_by_prefix("QTIFY/cover_images");
+  // mongoose.connection.close();
+  // console.log("database and cloudinary seeded")
+  // return
 
   const albums = [
     {
@@ -156,7 +173,7 @@ async function seed() {
   const songPath = path.resolve(__dirname, "../../public/songs");
   const songFiles = fs.readdirSync(songPath);
   let cloud_file_path = "QTIFY/songs";
-  await seedFunction(songPath, songFiles, cloud_file_path, songs,"audioURL");
+  await seedFunction(songPath, songFiles, cloud_file_path, songs, "audioURL");
 
   const songCoverImagePath = path.resolve(
     __dirname,
@@ -193,5 +210,11 @@ async function seed() {
   await song_model.insertMany(songs);
 
   mongoose.connection.close();
+  console.log("database and cloudinary seeded")
+} catch (error) {
+  console.log("cannot seed databse")
+  console.error(error)
+  
+}
 }
 seed();

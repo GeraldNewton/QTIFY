@@ -1,6 +1,8 @@
 const error_handler=require("../helpers/error_handler.js");
 const Song=require("../models/song_model.js");
 
+console.log()
+// ? get all songs:-
 const getAllSongs = error_handler(async (req, res) => {
   // -1 descending order
   // 1 ascending order
@@ -8,6 +10,7 @@ const getAllSongs = error_handler(async (req, res) => {
   res.status(200).json(songs);
 }, "getAllSongs");
 
+// ? get featured songs:-
 const getFeaturedSongs = error_handler(async (req, res) => {
   const songs = await Song.aggregate([
     {
@@ -26,6 +29,7 @@ const getFeaturedSongs = error_handler(async (req, res) => {
   res.status(200).json(songs);
 }, "getFeaturedSongs");
 
+// ? get made for you song:-
 const getMadeForYouSongs = error_handler(async (req, res) => {
   const songs = await Song.aggregate([
     {
@@ -44,6 +48,7 @@ const getMadeForYouSongs = error_handler(async (req, res) => {
   res.status(200).json(songs);
 }, "getMadeForYouSongs");
 
+// ? get trending songs:-
 const getTrendingSongs = error_handler(async (req, res) => {
   const songs = await Song.aggregate([
     {

@@ -1,34 +1,37 @@
 const album_model = require("../models/album_model");
 const song_model = require("../models/song_model");
-const error_handler = require('../helpers/error_handler');
+const error_handler = require("../helpers/error_handler");
 const uploadToCloudinary = require("../helpers/upload_To_cloudinary");
+const cloudinary = require("../lib/cloudinary");
 
-// const uploadToCloudinary = async (file_path,folder) => {
-//   try {
-//     const res = await cloudinary.uploader.upload(file_path, {
-//       resource_type: "auto",
-//       folder
-//     });
-//     return res.secure_url;
-//   } catch (error) {
-//     console.log("error in uploadToCloudinary",error);
-//   }
-// };
-
+// ? creates song:-
+// ? upload audio and image file to cloudinary
+// ? create song document
+// ? adds to album if albumId is provided
 const createSong = error_handler(async (req, res) => {
   if (!req.files || !req.files.audio_file || !req.files.image_file)
     return res.status(400).send({ message: "send all files" });
-  let audioURL = await uploadToCloudinary(req.files.audio_file.tempFilePath,"QTIFY/songs");
-  audioURL=audioURL.secure_url
-  let imageURL = await uploadToCloudinary(req.files.image_file.tempFilePath,"QTIFY/cover_images/songs");
-  imageURL=imageURL.secure_url
-  const { song_name, artist, duration, albumId } = req.body;
+  const audioFile = await uploadToCloudinary(
+    req.files.audio_file.tempFilePath,
+    "QTIFY/songs"
+  );
+  cloudinaryAudioPublicId = audioFile.public_id;
+  audioURL = audioFile.secure_url;
+  let imageFile = await uploadToCloudinary(
+    req.files.image_file.tempFilePath,
+    "QTIFY/cover_images/songs"
+  );
+  cloudinaryImagePublicId = imageFile.public_id;
+  imageURL = imageFile.secure_url;
+  const { song_name, artist, albumId, duration } = req.body;
   const song_doc = await song_model.create({
     song_name,
     artist,
-    imageURL,
-    audioURL,
     duration,
+    audioURL,
+    cloudinaryAudioPublicId,
+    imageURL,
+    cloudinaryImagePublicId,
     albumId: albumId || null,
   });
   if (albumId)
@@ -36,47 +39,71 @@ const createSong = error_handler(async (req, res) => {
       { _id: albumId },
       { $push: { songs: song_doc._id } }
     );
-  res.send(song_doc);
-},"createSong");
+  res.send({message:"Song added Successfully"});
+}, "createSong");
 
+// ? deletes song:-
+// ? delete audio and image file from cloudinary
+// ? delete song document
+// ? removes from album if albumId is provided
 const deleteSong = error_handler(async (req, res) => {
   const { _id } = req.params;
   const song_doc = await song_model.findById(_id);
   const albumId = song_doc.albumId;
-  if (albumId){
-    await album_model.updateOne(
-      { _id: albumId },
-      { $pull: {songs:_id} }
-    );
-    console.log("i run")
-  }
+  await cloudinary.uploader.destroy(song_doc.cloudinaryAudioPublicId,{resource_type:"video"})
+  await cloudinary.uploader.destroy(song_doc.cloudinaryImagePublicId)
+  if (albumId)
+    await album_model.updateOne({ _id: albumId }, { $pull: { songs: _id } });
   await song_model.findByIdAndDelete(_id);
-  res.send({ message: "song deleted" });
-},"deleteSong");
+  res.send({ message: "Song deleted Successfully" });
+}, "deleteSong");
 
+// ? creates album:-
+// ? upload image file to cloudinary
+// ? create album document
 const createAlbum = error_handler(async (req, res) => {
-  let imageURL = await uploadToCloudinary(req.files.image_file.tempFilePath,"QTIFY/cover_images/albums");
-  imageURL=imageURL.secure_url
+  let imageFile = await uploadToCloudinary(
+    req.files.image_file.tempFilePath,
+    "QTIFY/cover_images/albums"
+  );
+  cloudinaryImagePublicId = imageFile.public_id;
+  imageURL = imageFile.secure_url;
   const { album_name, artist, releaseYear } = req.body;
   const album_doc = await album_model.create({
     album_name,
     artist,
-    imageURL,
     releaseYear,
+    imageURL,
+    cloudinaryImagePublicId
   });
-  res.send(album_doc);
-},"createAlbum");
+  res.send({message:"Album added Successfully"});
+}, "createAlbum");
 
+// ? deletes album:-
+// ? delete image file from cloudinary
+// ? create song document
 const deleteAlbum = error_handler(async (req, res) => {
   const { _id } = req.params;
   const album_doc = await album_model.findById(_id);
+  await cloudinary.uploader.destroy(album_doc.cloudinaryImagePublicId)
   const song_ids = album_doc.songs.map((obj) => obj._id);
   await song_model.updateMany(
     { _id: { $in: [...song_ids] } },
     { $set: { albumId: null } }
   );
   await album_model.findByIdAndDelete(_id);
-  res.send({ message: "album deleted" });
-},"deleteAlbum");
+  res.send({ message: "Album deleted Successfully" });
+}, "deleteAlbum");
 
-module.exports = { createSong, createAlbum, deleteSong, deleteAlbum };
+// ? checks admin:-
+const checkAdmin = error_handler(async (req, res) => {
+  res.send({ isAdmin: true });
+}, "checkAdmin");
+
+module.exports = {
+  createSong,
+  createAlbum,
+  deleteSong,
+  deleteAlbum,
+  checkAdmin,
+};

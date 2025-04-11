@@ -3,6 +3,7 @@ const album_model = require("../models/album_model");
 const song_model = require("../models/song_model");
 const user_model = require("../models/user_model");
 
+// ? provides stats of users, albums, song:-
 const getStats = error_handler(async (req, res) => {
   const [userCount, albumCount, songCount, distinctArtist] = await Promise.all([
     user_model.countDocuments({}),

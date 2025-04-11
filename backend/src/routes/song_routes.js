@@ -3,7 +3,7 @@ const { getFeaturedSongs, getTrendingSongs, getMadeForYouSongs, getAllSongs } = 
 const { protectRoute } = require("../middlewares/auth_middleware");
 const router=express.Router();
 
-router.get("/",getAllSongs)//! add protectRoute  
+router.get("/",protectRoute,getAllSongs)
 router.get("/featured",getFeaturedSongs)
 router.get("/made_for_you",getMadeForYouSongs)
 router.get("/trending",getTrendingSongs)
